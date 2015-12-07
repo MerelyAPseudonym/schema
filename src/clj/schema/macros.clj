@@ -1,7 +1,6 @@
 (ns schema.macros
   "Macros and macro helpers used in schema.core."
   (:require
-   [clojure.string :as str]
    [schema.utils :as utils]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
