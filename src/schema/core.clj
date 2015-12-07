@@ -78,16 +78,16 @@
   (:refer-clojure :exclude [Keyword Symbol atom defrecord defn letfn defmethod fn])
   (:require
    [clojure.string :as str]
-   #+clj [schema.macros :as macros]
+         [schema.macros :as macros]
    [schema.utils :as utils]
    [schema.spec.core :as spec :include-macros true]
    [schema.spec.leaf :as leaf]
    [schema.spec.variant :as variant]
    [schema.spec.collection :as collection])
-  #+cljs (:require-macros [schema.macros :as macros]
-                          schema.core))
+                                                    
+                                      )
 
-#+clj (def clj-1195-fixed?
+      (def clj-1195-fixed?
         (do (defprotocol CLJ1195Check
               (dummy-method [this]))
             (try
@@ -97,11 +97,11 @@
               (catch RuntimeException _
                 false))))
 
-#+clj (when-not clj-1195-fixed?
+      (when-not clj-1195-fixed?
         ;; don't exclude fn because of bug in extend-protocol
         (refer-clojure :exclude '[Keyword Symbol atom defrecord defn letfn defmethod]))
 
-#+clj (set! *warn-on-reflection* true)
+      (set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Schema protocol
@@ -118,7 +118,7 @@
      {:a Keyword, :b [Int]}"))
 
 ;; Schemas print as their explains
-#+clj
+     
 (do (clojure.core/defmethod print-method schema.core.Schema [s writer]
       (print-method (explain s) writer))
     (prefer-method print-method schema.core.Schema clojure.lang.IRecord)
@@ -168,15 +168,15 @@
 (clojure.core/defn instance-precondition [s klass]
   (spec/precondition
    s
-   #+clj #(instance? klass %)
-   #+cljs #(and (not (nil? %))
-                (or (identical? klass (.-constructor %))
-                    (js* "~{} instanceof ~{}" % klass)))
+         #(instance? klass %)
+                              
+                                                        
+                                                        
    #(list 'instance? klass %)))
 
 (extend-protocol Schema
-  #+clj Class
-  #+cljs function
+        Class
+                 
   (spec [this]
     (let [pre (instance-precondition this this)]
       (if-let [class-schema (utils/class-schema this)]
@@ -186,19 +186,19 @@
     (if-let [more-schema (utils/class-schema this)]
       (explain more-schema)
       (condp = this
-        #+clj java.lang.String #+cljs nil 'Str
-        #+clj java.lang.Boolean #+cljs js/Boolean 'Bool
-        #+clj java.lang.Number #+cljs js/Number 'Num
-        #+clj java.util.regex.Pattern #+cljs nil 'Regex
-        #+clj java.util.Date #+cljs js/Date 'Inst
-        #+clj java.util.UUID #+cljs cljs.core/UUID 'Uuid
-        #+clj (symbol (.getName ^Class this)) #+cljs this))))
+              java.lang.String            'Str
+              java.lang.Boolean                   'Bool
+              java.lang.Number                  'Num
+              java.util.regex.Pattern            'Regex
+              java.util.Date                'Inst
+              java.util.UUID                       'Uuid
+              (symbol (.getName ^Class this))            ))))
 
 
 ;; On the JVM, the primitive coercion functions (double, long, etc)
 ;; alias to the corresponding boxed number classes
 
-#+clj
+     
 (do
   (defmacro extend-primitive [cast-sym class-sym]
     (let [qualified-cast-sym `(class @(resolve '~cast-sym))]
@@ -343,16 +343,16 @@
 ;;; regex (validates matching Strings)
 
 (extend-protocol Schema
-  #+clj java.util.regex.Pattern
-  #+cljs js/RegExp
+        java.util.regex.Pattern
+                  
   (spec [this]
     (leaf/leaf-spec
      (some-fn
       (spec/simple-precondition this string?)
       (spec/precondition this #(re-find this %) #(list 're-find (explain this) %)))))
   (explain [this]
-    #+clj (symbol (str "#\"" this "\""))
-    #+cljs (symbol (str "#\"" (.slice (str this) 1 -1) "\""))))
+          (symbol (str "#\"" this "\""))
+                                                             ))
 
 
 ;;; Cross-platform Schemas for atomic value types
@@ -360,15 +360,15 @@
 (def Str
   "Satisfied only by String.
    Is (pred string?) and not js/String in cljs because of keywords."
-  #+clj java.lang.String #+cljs (pred string?))
+        java.lang.String                      )
 
 (def Bool
   "Boolean true or false"
-  #+clj java.lang.Boolean #+cljs js/Boolean)
+        java.lang.Boolean                  )
 
 (def Num
   "Any number"
-  #+clj java.lang.Number #+cljs js/Number)
+        java.lang.Number                 )
 
 (def Int
   "Any integral number"
@@ -384,20 +384,20 @@
 
 (def Regex
   "A regular expression"
-  #+clj java.util.regex.Pattern
-  #+cljs (reify Schema ;; Closure doesn't like if you just def as js/RegExp
-           (spec [this]
-             (leaf/leaf-spec
-              (spec/precondition this #(instance? js/RegExp %) #(list 'instance? 'js/RegExp %))))
-           (explain [this] 'Regex)))
+        java.util.regex.Pattern
+                                                                           
+                       
+                            
+                                                                                                 
+                                   )
 
 (def Inst
   "The local representation of #inst ..."
-  #+clj java.util.Date #+cljs js/Date)
+        java.util.Date               )
 
 (def Uuid
   "The local representation of #uuid ..."
-  #+clj java.util.UUID #+cljs cljs.core/UUID)
+        java.util.UUID                      )
 
 
 
@@ -623,27 +623,27 @@
 
 (clojure.core/defn var-name [v]
   (let [{:keys [ns name]} (meta v)]
-    (symbol (str #+clj (ns-name ns) #+cljs ns "/" name))))
+    (symbol (str       (ns-name ns)           "/" name))))
 
 (clojure.core/defrecord Recursive [derefable]
   Schema
   (spec [this] (variant/variant-spec spec/+no-precondition+ [{:schema @derefable}]))
   (explain [this]
     (list 'recursive
-          (if #+clj (var? derefable) #+cljs (instance? Var derefable)
+          (if       (var? derefable)                                 
               (list 'var (var-name derefable))
-              #+clj
+                   
               (format "%s@%x"
                       (.getName (class derefable))
                       (System/identityHashCode derefable))
-              #+cljs
-              '...))))
+                    
+                  ))))
 
 (clojure.core/defn recursive
   "Support for (mutually) recursive schemas by passing a var that points to a schema,
    e.g (recursive #'ExampleRecursiveSchema)."
   [schema]
-  (when-not #+clj (instance? clojure.lang.IDeref schema) #+cljs (satisfies? IDeref schema)
+  (when-not       (instance? clojure.lang.IDeref schema)                                  
             (macros/error! (utils/format* "Not an IDeref: %s" schema)))
   (Recursive. schema))
 
@@ -652,8 +652,8 @@
 ;;; Atom schema
 
 (defn- atom? [x]
-  #+clj (instance? clojure.lang.Atom x)
-  #+cljs (satisfies? IAtom x))
+        (instance? clojure.lang.Atom x)
+                             )
 
 (clojure.core/defrecord Atomic [schema]
   Schema
@@ -788,7 +788,7 @@
               (cond e (item-fn e)
                     required? (item-fn (utils/error [rk 'missing-required-key])))
               (if e
-                (dissoc #+clj (if (instance? clojure.lang.PersistentStructMap m) (into {} m) m) #+cljs m
+                (dissoc       (if (instance? clojure.lang.PersistentStructMap m) (into {} m) m)         
                         rk)
                 m))))))
      (when extra-keys-schema
@@ -809,13 +809,13 @@
   (into {} (for [[k v] this] [(explain-kspec k) (explain v)])))
 
 (extend-protocol Schema
-  #+clj clojure.lang.APersistentMap
-  #+cljs cljs.core.PersistentArrayMap
+        clojure.lang.APersistentMap
+                                     
   (spec [this] (map-spec this))
   (explain [this] (map-explain this))
-  #+cljs cljs.core.PersistentHashMap
-  #+cljs (spec [this] (map-spec this))
-  #+cljs (explain [this] (map-explain this)))
+                                    
+                                      
+                                            )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -824,8 +824,8 @@
 ;; A set schema is a Clojure set with a single element, a schema that all values must satisfy
 
 (extend-protocol Schema
-  #+clj clojure.lang.APersistentSet
-  #+cljs cljs.core.PersistentHashSet
+        clojure.lang.APersistentSet
+                                    
   (spec [this]
     (macros/assert! (= (count this) 1) "Set schema must have exactly one element")
     (collection/collection-spec
@@ -843,15 +843,15 @@
 
 (clojure.core/defn queue? [x]
   (instance?
-   #+clj clojure.lang.PersistentQueue
-   #+cljs cljs.core/PersistentQueue
+         clojure.lang.PersistentQueue
+                                   
    x))
 
 (clojure.core/defn as-queue [col]
   (reduce
    conj
-   #+clj clojure.lang.PersistentQueue/EMPTY
-   #+cljs cljs.core/PersistentQueue.EMPTY
+         clojure.lang.PersistentQueue/EMPTY
+                                         
    col))
 
 (clojure.core/defrecord Queue [schema]
@@ -907,13 +907,13 @@
     [(concat required optional) (first more)]))
 
 (extend-protocol Schema
-  #+clj clojure.lang.APersistentVector
-  #+cljs cljs.core.PersistentVector
+        clojure.lang.APersistentVector
+                                   
   (spec [this]
     (collection/collection-spec
      (spec/precondition
       this
-      (clojure.core/fn [x] (or (nil? x) (sequential? x) #+clj (instance? java.util.List x)))
+      (clojure.core/fn [x] (or (nil? x) (sequential? x)       (instance? java.util.List x)))
       #(list 'sequential? %))
      vec
      (let [[singles multi] (parse-sequence-schema this)]
@@ -973,10 +973,10 @@
      (map-elements schema)
      (map-error)))
   (explain [this]
-    (list 'record #+clj (symbol (.getName ^Class klass)) #+cljs (symbol (pr-str klass)) (explain schema))))
+    (list 'record       (symbol (.getName ^Class klass))                                (explain schema))))
 
 (clojure.core/defn record* [klass schema map-constructor]
-  #+clj (macros/assert! (class? klass) "Expected record class, got %s" (utils/type-of klass))
+        (macros/assert! (class? klass) "Expected record class, got %s" (utils/type-of klass))
   (macros/assert! (map? schema) "Expected map, got %s" (utils/type-of schema))
   (with-meta (Record. klass schema) {:constructor map-constructor}))
 
@@ -1023,7 +1023,7 @@
   (if (seq input-schema)
     (if (instance? One (last input-schema))
       (count input-schema)
-      #+clj Long/MAX_VALUE #+cljs js/Number.MAX_VALUE)
+            Long/MAX_VALUE                           )
     0))
 
 (clojure.core/defn make-fn-schema
@@ -1126,7 +1126,7 @@
   [name field-schema & more-args]
   (apply macros/emit-defrecord 'clojure.core/defrecord &env name field-schema more-args))
 
-#+clj
+     
 (defmacro defrecord+
   "DEPRECATED -- canonical version moved to schema.potemkin
    Like defrecord, but emits a record using potemkin/defrecord+.  You must provide
@@ -1189,7 +1189,7 @@
       (macros/safe-get (meta f) :schema)))
 
 ;; work around bug in extend-protocol (refers to bare 'fn, so we can't exclude it).
-#+clj (when-not clj-1195-fixed? (ns-unmap *ns* 'fn))
+      (when-not clj-1195-fixed? (ns-unmap *ns* 'fn))
 
 (defmacro fn
   "s/fn : s/defn :: clojure.core/fn : clojure.core/defn
@@ -1349,10 +1349,12 @@
          ~@(when doc-string? [doc-string?])
          (validate output-schema# ~init)))))
 
-#+clj
+     
 (set! *warn-on-reflection* false)
 
 (clojure.core/defn set-max-value-length!
   "Sets the maximum length of value to be output before it is contracted to a prettier name."
   [max-length]
   (reset! utils/max-value-length max-length))
+
+;;;;;;;;;;;; This file autogenerated from src/cljx/schema/core.cljx
