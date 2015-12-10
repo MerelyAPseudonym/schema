@@ -37,7 +37,7 @@
 ;; A Precondition is a function of a value that returns a
 ;; ValidationError if the value does not satisfy the precondition,
 ;; and otherwise returns nil.
-;; e.g., (s/defschema Precondition (s/=> (s/maybe schema.utils.ValidationError) s/Any))
+;; i.e., (s/defschema Precondition (s/=> (s/maybe schema.utils.ValidationError) s/Any))
 ;; as such, a precondition is essentially a very simple checker.
 
 (def +no-precondition+ (fn [_] nil))
