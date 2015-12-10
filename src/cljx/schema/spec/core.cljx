@@ -11,7 +11,7 @@
 
 (defprotocol CoreSpec
   "Specs are a common language for Schemas to express their structure.
-   These two use-cases aren't priveledged, just the two that are considered core
+   These two use-cases aren't priviledged, just the two that are considered core
    to being a Spec."
   (subschemas [this]
     "List all subschemas")
@@ -24,7 +24,7 @@
 
      params is a map specifying:
       - subschema-checker - a function for checking subschemas
-      - returned-walked? - a boolean specifying whether to return a walked version of the data
+      - return-walked? - a boolean specifying whether to return a walked version of the data
         (otherwise, nil is returned which increases performance)
       - cache - a map structure from schema to checker, which speeds up checker creation
         when the same subschema appears multiple times, and also facilitates handling
