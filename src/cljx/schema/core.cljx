@@ -130,8 +130,10 @@
    error descriptions otherwise."
   [schema]
   (comp utils/error-val
-        (spec/run-checker
-         (clojure.core/fn [s params] (spec/checker (spec s) params)) false schema)))
+        (spec/run-checker (clojure.core/fn [s params]
+                            (spec/checker (spec s) params))
+                          false
+                          schema)))
 
 (clojure.core/defn check
   "Return nil if x matches schema; otherwise, returns a value that looks like the

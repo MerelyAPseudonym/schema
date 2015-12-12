@@ -131,7 +131,8 @@
 
 (defn error-val [x]
   (when (error? x)
-    (.-error ^ErrorContainer x)))
+    (.-error ^ErrorContainer x)  ; why not just `(:error x)`?
+    ))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

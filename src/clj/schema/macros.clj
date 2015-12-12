@@ -1,7 +1,6 @@
 (ns schema.macros
   "Macros and macro helpers used in schema.core."
-  (:require
-   [schema.utils :as utils]))
+  (:require [schema.utils :as utils]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Helpers used in schema.core.
@@ -56,6 +55,15 @@
   `(when-not ~form
      (error! (utils/format* ~@format-args))))
 
+(defmacro validation-error
+  ([schema value expectation]
+   #_(validation-error &form &env schema value expectation nil)
+   `(validation-error ~schema ~value ~expectation nil)
+   )
+  ([schema value expectation fail-explanation]
+   `(schema.utils/error #_utils/error
+     (utils/make-ValidationError ~schema ~value (delay ~expectation) ~fail-explanation))))
+#_
 (defmacro validation-error [schema value expectation & [fail-explanation]]
   `(schema.utils/error
     (utils/make-ValidationError ~schema ~value (delay ~expectation) ~fail-explanation)))
@@ -68,8 +76,8 @@
     [(first s) (next s)]
     [nil s]))
 
-(def primitive-sym? '#{float double boolean byte char short int long
-                       floats doubles booleans bytes chars shorts ints longs objects})
+(def primitive-sym? '#{        float  double  boolean  byte  char  short  int  long
+                       objects floats doubles booleans bytes chars shorts ints longs})
 
 (defn valid-tag? [env tag]
   (and (symbol? tag) (or (primitive-sym? tag) (class? (resolve env tag)))))

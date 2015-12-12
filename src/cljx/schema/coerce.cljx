@@ -7,7 +7,8 @@
    [schema.core :as s :include-macros true]
    [schema.spec.core :as spec]
    [schema.utils :as utils]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [taoensso.timbre :as timbre])
   #+cljs (:require-macros [schema.macros :as macros]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,20 +28,32 @@
   "Produce a function that simultaneously coerces and validates a datum.  Returns
    a coerced value, or a schema.utils.ErrorContainer describing the error."
   [schema coercion-matcher :- CoercionMatcher]
-  (spec/run-checker
-   (fn [s params]
-     (let [c (spec/checker (s/spec s) params)]
-       (if-let [coercer (coercion-matcher s)]
-         (fn [x]
-           (macros/try-catchall
-            (let [v (coercer x)]
-              (if (utils/error? v)
-                v
-                (c v)))
-            (catch t (macros/validation-error s x t))))
-         c)))
-   true
-   schema))
+  (spec/run-checker (fn [s params]
+                      #_(timbre/debug "s:" #_(pr-str s) (with-out-str (clojure.pprint/pprint s)))
+                      #_(timbre/debug "params:" #_(pr-str params) (with-out-str (clojure.pprint/pprint params)))
+                      #_(println "s:" s) (println "s:") (clojure.pprint/pprint s) (println "")
+                      #_(println "params:" params) (println "params:") (clojure.pprint/pprint params) (println "")
+                      (let [c (spec/checker (s/spec s) params)]
+                        #_(timbre/debug "c:" c)
+                        #_(println "c:" c)
+                        (timbre/spy c)
+                        (if-let [coercer (coercion-matcher s)]
+                          (fn [x]
+                            #_(timbre/debug "coercer:" (pr-str coercer))
+                            (println "coercer:" coercer)
+                            #_(timbre/debug "x:" (pr-str x))
+                            (println "x:" x)
+                            (macros/try-catchall
+                             (let [v (coercer x)]
+                               #_(timbre/debug "v:" (pr-str v))
+                               (println "v:" v)
+                               (if (utils/error? v)
+                                 v
+                                 (c v)))
+                             (catch t (macros/validation-error s x t))))
+                          c)))
+                    true
+                    schema))
 
 (s/defn coercer!
   "Like `coercer`, but is guaranteed to return a value that satisfies schema (or throw)."
@@ -147,3 +160,13 @@
   (or (+string-coercions+ schema)
       (keyword-enum-matcher schema)
       (set-matcher schema)))
+
+
+(def CommentRequest
+  {(s/optional-key :parent-comment-id) long
+   :text String
+   :share-services [(s/enum :twitter :facebook :google)]})
+
+(def parse-comment-request
+  (coercer CommentRequest
+           json-coercion-matcher))
