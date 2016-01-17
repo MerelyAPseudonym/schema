@@ -1,8 +1,8 @@
 (ns schema.coerce
   "Extension of schema for input coercion (coercing an input to match a schema)"
   (:require
-   #?(:clj [clojure.edn :as edn])
-   #?(:clj [schema.macros :as macros])
+   [clojure.edn :as edn]
+   [schema.macros :as macros]
    [schema.core :as s :include-macros true]
    [schema.spec.core :as spec]
    [schema.utils :as utils]
@@ -70,14 +70,14 @@
   (if (string? s) (= "true" (str/lower-case s)) s))
 
 (defn keyword-enum-matcher [schema]
-  (when (or (and (instance? #?(:clj schema.core.EnumSchema) schema)
+  (when (or (and (instance? schema.core.EnumSchema schema)
                  (every? keyword? (.-vs ^schema.core.EnumSchema schema)))
-            (and (instance? #?(:clj schema.core.EqSchema) schema)
+            (and (instance? schema.core.EqSchema schema)
                  (keyword? (.-v ^schema.core.EqSchema schema))))
     string->keyword))
 
 (defn set-matcher [schema]
-  (if (instance? #?(:clj clojure.lang.APersistentSet) schema)
+  (if (instance? clojure.lang.APersistentSet schema)
     (fn [x] (if (sequential? x) (set x) x))))
 
 (defn safe
@@ -88,23 +88,20 @@
   [f]
   (fn [x] (macros/try-catchall (f x) (catch e x))))
 
-#?(:clj (def safe-long-cast
-          "Coerce x to a long if this can be done without losing precision, otherwise return x."
-          (safe
-           (fn [x]
-             (let [l (long x)]
-               (if (== l x)
-                 l
-                 x))))))
+(def safe-long-cast
+  "Coerce x to a long if this can be done without losing precision, otherwise return x."
+  (safe
+   (fn [x]
+     (let [l (long x)]
+       (if (== l x)
+         l
+         x)))))
 
 (def string->uuid
   "Returns instance of UUID if input is a string.
    Note: in CLJS, this does not guarantee a specific UUID string representation,
          similar to #uuid reader"
-  #?(:clj
-  (safe #(java.util.UUID/fromString ^String %))
-  )
-  )
+  (safe #(java.util.UUID/fromString ^String %)))
 
 
 (def ^:no-doc +json-coercions+
@@ -112,11 +109,11 @@
    {s/Keyword string->keyword
     s/Bool string->boolean
     s/Uuid string->uuid}
-   #?(:clj {clojure.lang.Keyword string->keyword
-            s/Int safe-long-cast
-            Long safe-long-cast
-            Double (safe double)
-            Boolean string->boolean})))
+   {clojure.lang.Keyword string->keyword
+    s/Int safe-long-cast
+    Long safe-long-cast
+    Double (safe double)
+    Boolean string->boolean}))
 
 (defn json-coercion-matcher
   "A matcher that coerces keywords and keyword eq/enums from strings, and longs and doubles
@@ -128,16 +125,16 @@
 
 (def edn-read-string
   "Reads one object from a string. Returns nil when string is nil or empty"
-  #?(:clj edn/read-string))
+  edn/read-string)
 
 (def ^:no-doc +string-coercions+
   (merge
    +json-coercions+
    {s/Num (safe edn-read-string)
     s/Int (safe edn-read-string)}
-   #?(:clj {s/Int (safe #(safe-long-cast (edn-read-string %)))
-            Long (safe #(safe-long-cast (edn-read-string %)))
-            Double (safe #(Double/parseDouble %))})))
+   {s/Int (safe #(safe-long-cast (edn-read-string %)))
+    Long (safe #(safe-long-cast (edn-read-string %)))
+    Double (safe #(Double/parseDouble %))}))
 
 (defn string-coercion-matcher
   "A matcher that coerces keywords, keyword eq/enums, s/Num and s/Int,

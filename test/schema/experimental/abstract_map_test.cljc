@@ -1,6 +1,5 @@
 (ns schema.experimental.abstract-map-test
-  #?(:clj (:use clojure.test [schema.test-macros :only [valid! invalid! invalid-call!]])
-     )
+  (:use clojure.test [schema.test-macros :only [valid! invalid! invalid-call!]])
   (:require
    [schema.core :as s]
    [schema.coerce :as coerce]

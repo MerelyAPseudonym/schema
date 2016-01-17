@@ -1,9 +1,8 @@
 (ns schema.spec.variant
   (:require
-   #?(:clj [schema.macros :as macros])
+   [schema.macros :as macros]
    [schema.utils :as utils]
-   [schema.spec.core :as spec])
-  )
+   [schema.spec.core :as spec]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

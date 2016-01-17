@@ -2,7 +2,7 @@
   "Protocol and preliminaries for Schema 'specs', which are a common language
    for schemas to use to express their structure."
   (:require
-   #?(:clj [schema.macros :as macros])
+    [schema.macros :as macros]
    [schema.utils :as utils])
   )
 
@@ -70,16 +70,16 @@
    s
    {:subschema-checker f
     :return-walked? return-walked?
-    :cache #?(:clj (java.util.IdentityHashMap.))}))
+    :cache (java.util.IdentityHashMap.)}))
 
 (defn with-cache [cache cache-key wrap-recursive-delay result-fn]
-  (if-let [w #?(:clj (.get ^java.util.Map cache cache-key))]
+  (if-let [w (.get ^java.util.Map cache cache-key)]
     (if (= ::in-progress w) ;; recursive
-      (wrap-recursive-delay (delay #?(:clj (.get ^java.util.Map cache cache-key))))
+      (wrap-recursive-delay (delay (.get ^java.util.Map cache cache-key)))
       w)
-    (do #?(:clj (.put ^java.util.Map cache cache-key ::in-progress))
+    (do (.put ^java.util.Map cache cache-key ::in-progress)
         (let [res (result-fn)]
-          #?(:clj (.put ^java.util.Map cache cache-key res))
+          (.put ^java.util.Map cache cache-key res)
           res))))
 
 (defn sub-checker

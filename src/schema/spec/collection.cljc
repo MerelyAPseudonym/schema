@@ -12,11 +12,10 @@
 (defn- element-transformer [e params then]
   (let [parser (:parser e)
         c (spec/sub-checker e params)]
-    #?(:clj (fn [^java.util.List res x]
-              (then res (parser (fn [t] (.add res (if (utils/error? t) t (c t)))) x)))
-       )))
+    (fn [^java.util.List res x]
+      (then res (parser (fn [t] (.add res (if (utils/error? t) t (c t)))) x)))))
 
-#?(:clj ;; for performance
+;; for performance
 (defn- has-error? [^java.util.List l]
   (let [it (.iterator l)]
     (loop []
@@ -25,7 +24,6 @@
           true
           (recur))
         false))))
-)
 
 
 
@@ -41,9 +39,9 @@
              (reverse elements))]
       (fn [x]
         (or (pre x)
-            (let [res #?(:clj (java.util.ArrayList.))
+            (let [res (java.util.ArrayList.)
                   remaining (t res x)
-                  res #?(:clj res)]
+                  res res]
               (if (or (seq remaining) (has-error? res))
                 (utils/error (on-error x res remaining))
                 (constructor res))))))))
