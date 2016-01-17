@@ -1,14 +1,13 @@
 (ns schema.coerce
   "Extension of schema for input coercion (coercing an input to match a schema)"
   (:require
-   #?(:cljs [cljs.reader :as reader])
    #?(:clj [clojure.edn :as edn])
    #?(:clj [schema.macros :as macros])
    [schema.core :as s :include-macros true]
    [schema.spec.core :as spec]
    [schema.utils :as utils]
    [clojure.string :as str])
-  #?(:cljs (:require-macros [schema.macros :as macros])))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Generic input coercion
@@ -71,14 +70,14 @@
   (if (string? s) (= "true" (str/lower-case s)) s))
 
 (defn keyword-enum-matcher [schema]
-  (when (or (and (instance? #?(:clj schema.core.EnumSchema, :cljs s/EnumSchema) schema)
+  (when (or (and (instance? #?(:clj schema.core.EnumSchema) schema)
                  (every? keyword? (.-vs ^schema.core.EnumSchema schema)))
-            (and (instance? #?(:clj schema.core.EqSchema :cljs s/EqSchema) schema)
+            (and (instance? #?(:clj schema.core.EqSchema) schema)
                  (keyword? (.-v ^schema.core.EqSchema schema))))
     string->keyword))
 
 (defn set-matcher [schema]
-  (if (instance? #?(:clj clojure.lang.APersistentSet, :cljs cljs.core.PersistentHashSet) schema)
+  (if (instance? #?(:clj clojure.lang.APersistentSet) schema)
     (fn [x] (if (sequential? x) (set x) x))))
 
 (defn safe
@@ -105,8 +104,6 @@
   #?(:clj
   (safe #(java.util.UUID/fromString ^String %))
   )
-  #?(:cljs
-  #(if (string? %) (cljs.core.UUID. %) %))
   )
 
 
@@ -131,7 +128,7 @@
 
 (def edn-read-string
   "Reads one object from a string. Returns nil when string is nil or empty"
-  #?(:clj edn/read-string, :cljs reader/read-string))
+  #?(:clj edn/read-string))
 
 (def ^:no-doc +string-coercions+
   (merge

@@ -84,8 +84,7 @@
    [schema.spec.leaf :as leaf]
    [schema.spec.variant :as variant]
    [schema.spec.collection :as collection])
-  #?(:cljs (:require-macros [schema.macros :as macros]
-                             schema.core)))
+  )
 
 #?(:clj (def clj-1195-fixed?
           (do (defprotocol CLJ1195Check
@@ -170,14 +169,12 @@
   (spec/precondition
    s
    #?(:clj #(instance? klass %)
-      :cljs #(and (not (nil? %))
-                  (or (identical? klass (.-constructor %))
-                      (js* "~{} instanceof ~{}" % klass))))
+      )
    #(list 'instance? klass %)))
 
 (extend-protocol Schema
   #?(:clj Class
-     :cljs function)
+     )
   (spec [this]
     (let [pre (instance-precondition this this)]
       (if-let [class-schema (utils/class-schema this)]
@@ -187,15 +184,15 @@
     (if-let [more-schema (utils/class-schema this)]
       (explain more-schema)
       (condp = this
-        #?(:clj java.lang.String, :cljs nil) 'Str
-        #?(:clj java.lang.Boolean, :cljs js/Boolean) 'Bool
-        #?(:clj java.lang.String, :cljs nil) 'Str
-        #?(:clj java.lang.Boolean, :cljs js/Boolean) 'Bool
-        #?(:clj java.lang.Number, :cljs js/Number) 'Num
-        #?(:clj java.util.regex.Pattern, :cljs nil) 'Regex
-        #?(:clj java.util.Date, :cljs js/Date) 'Inst
-        #?(:clj java.util.UUID, :cljs cljs.core/UUID) 'Uuid
-        #?(:clj (symbol (.getName ^Class this)), :cljs this)))))
+        #?(:clj java.lang.String) 'Str
+        #?(:clj java.lang.Boolean) 'Bool
+        #?(:clj java.lang.String) 'Str
+        #?(:clj java.lang.Boolean) 'Bool
+        #?(:clj java.lang.Number) 'Num
+        #?(:clj java.util.regex.Pattern) 'Regex
+        #?(:clj java.util.Date) 'Inst
+        #?(:clj java.util.UUID) 'Uuid
+        #?(:clj (symbol (.getName ^Class this)))))))
 
 
 ;; On the JVM, the primitive coercion functions (double, long, etc)
@@ -348,7 +345,7 @@
 
 (extend-protocol Schema
   #?(:clj java.util.regex.Pattern
-     :cljs js/RegExp)
+     )
   (spec [this]
     (leaf/leaf-spec
      (some-fn
@@ -356,7 +353,7 @@
       (spec/precondition this #(re-find this %) #(list 're-find (explain this) %)))))
   (explain [this]
     #?(:clj (symbol (str "#\"" this "\""))
-       :cljs (symbol (str "#\"" (.slice (str this) 1 -1) "\"")))))
+       )))
 
 
 ;;; Cross-platform Schemas for atomic value types
@@ -364,15 +361,15 @@
 (def Str
   "Satisfied only by String.
    Is (pred string?) and not js/String in cljs because of keywords."
-  #?(:clj java.lang.String, :cljs (pred string?)))
+  #?(:clj java.lang.String))
 
 (def Bool
   "Boolean true or false"
-  #?(:clj java.lang.Boolean, :cljs js/Boolean))
+  #?(:clj java.lang.Boolean))
 
 (def Num
   "Any number"
-  #?(:clj java.lang.Number, :cljs js/Number))
+  #?(:clj java.lang.Number))
 
 (def Int
   "Any integral number"
@@ -389,19 +386,15 @@
 (def Regex
   "A regular expression"
   #?(:clj java.util.regex.Pattern
-     :cljs (reify Schema ;; Closure doesn't like if you just def as js/RegExp
-             (spec [this]
-               (leaf/leaf-spec
-                (spec/precondition this #(instance? js/RegExp %) #(list 'instance? 'js/RegExp %))))
-             (explain [this] 'Regex))))
+     ))
 
 (def Inst
   "The local representation of #inst ..."
-  #?(:clj java.util.Date, :cljs js/Date))
+  #?(:clj java.util.Date))
 
 (def Uuid
   "The local representation of #uuid ..."
-  #?(:clj java.util.UUID, :cljs cljs.core/UUID))
+  #?(:clj java.util.UUID))
 
 
 
@@ -639,25 +632,25 @@
 
 (clojure.core/defn var-name [v]
   (let [{:keys [ns name]} (meta v)]
-    (symbol (str #?(:clj (ns-name ns), :cljs ns) "/" name))))
+    (symbol (str #?(:clj (ns-name ns)) "/" name))))
 
 (clojure.core/defrecord Recursive [derefable]
   Schema
   (spec [this] (variant/variant-spec spec/+no-precondition+ [{:schema @derefable}]))
   (explain [this]
     (list 'recursive
-          (if #?(:clj (var? derefable), :cljs (instance? Var derefable))
+          (if #?(:clj (var? derefable))
               (list 'var (var-name derefable))
               #?(:clj (format "%s@%x"
                               (.getName (class derefable))
                               (System/identityHashCode derefable))
-                 :cljs '...)))))
+                 )))))
 
 (clojure.core/defn recursive
   "Support for (mutually) recursive schemas by passing a var that points to a schema,
    e.g (recursive #'ExampleRecursiveSchema)."
   [schema]
-  (when-not #?(:clj (instance? clojure.lang.IDeref schema), :cljs (satisfies? IDeref schema))
+  (when-not #?(:clj (instance? clojure.lang.IDeref schema))
             (macros/error! (utils/format* "Not an IDeref: %s" schema)))
   (Recursive. schema))
 
@@ -667,7 +660,7 @@
 
 (defn- atom? [x]
   #?(:clj (instance? clojure.lang.Atom x)
-     :cljs (satisfies? IAtom x)))
+     ))
 
 (clojure.core/defrecord Atomic [schema]
   Schema
@@ -802,7 +795,7 @@
               (cond e (item-fn e)
                     required? (item-fn (utils/error [rk 'missing-required-key])))
               (if e
-                (dissoc #?(:clj (if (instance? clojure.lang.PersistentStructMap m) (into {} m) m), :cljs m)
+                (dissoc #?(:clj (if (instance? clojure.lang.PersistentStructMap m) (into {} m) m))
                         rk)
                 m))))))
      (when extra-keys-schema
@@ -824,12 +817,10 @@
 
 (extend-protocol Schema
   #?(:clj clojure.lang.APersistentMap
-     :cljs cljs.core.PersistentArrayMap)
+     )
   (spec [this] (map-spec this))
   (explain [this] (map-explain this))
-  #?@(:cljs [cljs.core.PersistentHashMap
-             (spec [this] (map-spec this))
-             (explain [this] (map-explain this))]))
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -839,7 +830,7 @@
 
 (extend-protocol Schema
   #?(:clj clojure.lang.APersistentSet
-     :cljs cljs.core.PersistentHashSet)
+     )
   (spec [this]
     (macros/assert! (= (count this) 1) "Set schema must have exactly one element")
     (collection/collection-spec
@@ -858,14 +849,14 @@
 (clojure.core/defn queue? [x]
   (instance?
    #?(:clj clojure.lang.PersistentQueue
-      :cljs cljs.core/PersistentQueue)
+      )
    x))
 
 (clojure.core/defn as-queue [col]
   (reduce
    conj
    #?(:clj clojure.lang.PersistentQueue/EMPTY
-      :cljs cljs.core/PersistentQueue.EMPTY)
+      )
    col))
 
 (clojure.core/defrecord Queue [schema]
@@ -922,7 +913,7 @@
 
 (extend-protocol Schema
   #?(:clj clojure.lang.APersistentVector
-     :cljs cljs.core.PersistentVector)
+     )
   (spec [this]
     (collection/collection-spec
      (spec/precondition
@@ -987,7 +978,7 @@
      (map-elements schema)
      (map-error)))
   (explain [this]
-    (list 'record #?(:clj (symbol (.getName ^Class klass)), :cljs (symbol (pr-str klass))) (explain schema))))
+    (list 'record #?(:clj (symbol (.getName ^Class klass))) (explain schema))))
 
 (clojure.core/defn record* [klass schema map-constructor]
   #?(:clj (macros/assert! (class? klass) "Expected record class, got %s" (utils/type-of klass)))
@@ -1037,7 +1028,7 @@
   (if (seq input-schema)
     (if (instance? One (last input-schema))
       (count input-schema)
-      #?(:clj Long/MAX_VALUE, :cljs js/Number.MAX_VALUE))
+      #?(:clj Long/MAX_VALUE))
     0))
 
 (clojure.core/defn make-fn-schema

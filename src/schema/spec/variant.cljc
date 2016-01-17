@@ -3,7 +3,7 @@
    #?(:clj [schema.macros :as macros])
    [schema.utils :as utils]
    [schema.spec.core :as spec])
-  #?(:cljs (:require-macros [schema.macros :as macros])))
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

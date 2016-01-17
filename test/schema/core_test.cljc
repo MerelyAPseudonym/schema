@@ -7,10 +7,7 @@
       - The optional last argument also checks the printed Clojure representation of the error.
     - (invalid-call! s x) asserts that calling the function throws an error."
   #?(:clj (:use clojure.test [schema.test-macros :only [valid! invalid! invalid-call!]])
-     :cljs (:use-macros
-            [cemerick.cljs.test :only [is deftest testing are]]
-            [schema.test-macros :only [valid! invalid! invalid-call!]]))
-  #?(:cljs (:require-macros [schema.macros :as macros]))
+     )
   (:require
    clojure.data
    [schema.utils :as utils]
@@ -18,17 +15,11 @@
    [schema.spec.core :as spec]
    [schema.spec.collection :as collection]
    #?(:clj [schema.macros :as macros]
-      :cljs cemerick.cljs.test)))
+      )))
 
-#?(:cljs
-(do
-  (def Exception js/Error)
-  (def AssertionError js/Error)
-  (def Throwable js/Error))
-)
 
 (deftest if-cljs-test
-  (is (= #?(:cljs true, :clj false) (macros/if-cljs true false))))
+  (is (= #?(:clj false) (macros/if-cljs true false))))
 
 (deftest try-catchall-test
   (let [a (atom 0)]
@@ -45,11 +36,10 @@
 
 (deftest fn-name-test
   (is (= "odd?" (utils/fn-name odd?)))
-  (is (= #?(:clj "schema.core-test/foo-bar", :cljs "foo-bar")
+  (is (= #?(:clj "schema.core-test/foo-bar")
          (utils/fn-name foo-bar)))
   #?(:clj (is (= "schema.core-test$fn" (subs (utils/fn-name (fn foo [x] (+ x x))) 0 19))))
-  #?(:cljs (is (= "foo" (utils/fn-name (fn foo [x] (+ x x))))))
-  #?(:cljs (is (= "function" (utils/fn-name (fn [x] (+ x x)))))))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Platform-specific leaf Schemas
@@ -110,7 +100,7 @@
     (valid! schema ::square)
     (invalid! schema ::form)
     #?(:clj (valid! (s/isa java.lang.Number) java.lang.Long)
-       :cljs (valid! (s/isa js/Number) js/Number))
+       )
     (is (= '(isa? ::shape) (s/explain schema)))))
 
 (deftest enum-test
@@ -373,7 +363,7 @@
       (is (= '(optional-key :x) (key explanation)))
       #?(:clj (is (= 'recursive (first (val explanation)))))
       #?(:clj (is (re-matches #"clojure.lang.Atom.*" (second (val explanation)))))
-      #?(:cljs (is (= '(recursive ...) (val explanation))))))
+      ))
 
   (is (= '{:black {(optional-key :red) (recursive (var schema.core-test/TestBlackNode))}}
          (s/explain TestBlackNode))))
@@ -842,7 +832,7 @@
 
 ;;; fn
 
-(def OddLong (s/both (s/pred odd?) #?(:cljs s/Int, :clj long)))
+(def OddLong (s/both (s/pred odd?) #?(:clj long)))
 
 (def +test-fn-schema+
   "Schema for (s/fn ^String [^OddLong x y])"
@@ -947,7 +937,7 @@
 
 (defn parse-long [x]
   #?(:clj (Long/parseLong x)
-     :cljs (js/parseInt x)))
+     ))
 
 (deftest destructured-validated-fn-test
   (let [LongPair [(s/one s/Int 'x) (s/one s/Int 'y)]
@@ -1064,25 +1054,6 @@
   (is (= 0 (with-test-fn 10 -10))))
 )
 
-#?(:cljs
-(deftest simple-validated-defn-test
-  (s/with-fn-validation
-    (is (= "3" (simple-validated-defn 3)))
-    (invalid-call! simple-validated-defn 4)
-    (invalid-call! simple-validated-defn "a"))
-  (s/with-fn-validation
-    (is (= 7 (validated-pre-post-defn 7)))
-    (invalid-call! validated-pre-post-defn 0)
-    (invalid-call! validated-pre-post-defn 11)
-    (invalid-call! validated-pre-post-defn 1)
-    (invalid-call! validated-pre-post-defn "a"))
-  (comment ;; Triggers what seems to be a bug in cljs, fixed in latest version.
-    (let [e (try (s/with-fn-validation (simple-validated-defn 2)) nil
-                 (catch js/Error e e))]
-      (when e ;; validation can be disabled at compile time, and exception not thrown
-        (is (>= (.indexOf (str e) +bad-input-str+) 0)))))
-  (is (= +simple-validated-defn-schema+ (s/fn-schema simple-validated-defn))))
-)
 
 #?(:clj
 (s/defn ^String multi-arglist-validated-defn :- OddLongString
@@ -1227,8 +1198,8 @@
 
 
 (deftest with-fn-validation-error-test
-  (is (thrown? #?(:clj RuntimeException, :cljs js/Error)
-               (s/with-fn-validation (throw #?(:clj (RuntimeException.), :cljs (js/Error. "error"))))))
+  (is (thrown? #?(:clj RuntimeException)
+               (s/with-fn-validation (throw #?(:clj (RuntimeException.))))))
   (is (false? (.get_cell utils/use-fn-validation))))
 
 
@@ -1283,7 +1254,7 @@
 
 (deftest defmethod-metadata-test
   (s/defmethod ^:always-validate m :v :- s/Num [m :- {:k s/Keyword} x :- s/Num y :- s/Num] "wrong")
-  (is (thrown? #?(:clj RuntimeException, :cljs js/Error)
+  (is (thrown? #?(:clj RuntimeException)
                (m {:k :v} 1 2))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1321,7 +1292,7 @@
            ~'Keyword [(~'one ~'Int "foo")
                       (~'maybe
                        (~'record
-                        #?(:clj Explainer, :cljs schema.core-test/Explainer)
+                        #?(:clj Explainer)
                         {:foo ~'Int
                          :bar ~'Keyword
                          (~'optional-key :baz) ~'Keyword}))]})))

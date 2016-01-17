@@ -14,8 +14,7 @@
         c (spec/sub-checker e params)]
     #?(:clj (fn [^java.util.List res x]
               (then res (parser (fn [t] (.add res (if (utils/error? t) t (c t)))) x)))
-       :cljs (fn [res x]
-               (then res (parser (fn [t] (swap! res conj (if (utils/error? t) t (c t)))) x))))))
+       )))
 
 #?(:clj ;; for performance
 (defn- has-error? [^java.util.List l]
@@ -29,10 +28,6 @@
 )
 
 
-#?(:cljs
-(defn- has-error? [l]
-  (some utils/error? l))
-)
 
 (defrecord CollectionSpec [pre constructor elements on-error]
   spec/CoreSpec
@@ -46,9 +41,9 @@
              (reverse elements))]
       (fn [x]
         (or (pre x)
-            (let [res #?(:clj (java.util.ArrayList.), :cljs (atom []))
+            (let [res #?(:clj (java.util.ArrayList.))
                   remaining (t res x)
-                  res #?(:clj res, :cljs @res)]
+                  res #?(:clj res)]
               (if (or (seq remaining) (has-error? res))
                 (utils/error (on-error x res remaining))
                 (constructor res))))))))

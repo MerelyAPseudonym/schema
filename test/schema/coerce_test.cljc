@@ -1,12 +1,11 @@
 (ns schema.coerce-test
   #?(:clj (:use clojure.test)
-     :cljs (:use-macros
-            [cemerick.cljs.test :only [is deftest]]))
+     )
   (:require
    [schema.core :as s]
    [schema.utils :as utils]
    [schema.coerce :as coerce]
-   #?(:cljs  cemerick.cljs.test)))
+   ))
 
 ;; s/Num s/Int
 
@@ -77,7 +76,7 @@
 (deftest coercer!-test
   (let [coercer (coerce/coercer! {:k s/Keyword :i s/Int} coerce/string-coercion-matcher)]
     (is (= {:k :key :i 12} (coercer {:k "key" :i "12"})))
-    (is (thrown-with-msg? #?(:clj Exception, :cljs js/Error)  #"keyword\? 12" (coercer {:k 12 :i 12})))))
+    (is (thrown-with-msg? #?(:clj Exception)  #"keyword\? 12" (coercer {:k 12 :i 12})))))
 
 #?(:clj
 (do
