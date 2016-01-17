@@ -1113,7 +1113,7 @@
                             (validated-pre-post-defn 1)))
       (invalid-call! validated-pre-post-defn "a")))
   (let [{:keys [tag schema metadata]} (meta #'simple-validated-defn)]
-    #+clj (is (= tag s/Str))
+    #?(:clj (is (= tag s/Str)))
     (is (= +simple-validated-defn-schema+ schema))
     (is (= metadata :bla)))
   (is (= +simple-validated-defn-schema+ (s/fn-schema simple-validated-defn)))
@@ -1321,7 +1321,7 @@
            ~'Keyword [(~'one ~'Int "foo")
                       (~'maybe
                        (~'record
-                        #+clj Explainer #+cljs schema.core-test/Explainer
+                        #?(:clj Explainer, :cljs schema.core-test/Explainer)
                         {:foo ~'Int
                          :bar ~'Keyword
                          (~'optional-key :baz) ~'Keyword}))]})))
