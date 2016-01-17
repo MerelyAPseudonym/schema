@@ -1195,7 +1195,7 @@
       (invalid-call! y (x)))))
 
 ;; Primitive validation testing for JVM
-#?(:clj [
+#?(:clj
 (do
   (def +primitive-validated-defn-schema+
     (s/=> long OddLong))

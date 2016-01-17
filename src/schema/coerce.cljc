@@ -71,14 +71,14 @@
   (if (string? s) (= "true" (str/lower-case s)) s))
 
 (defn keyword-enum-matcher [schema]
-  (when (or (and (instance? #?(:clj schema.core.EnumSchema, :cljs s/EnumSchema schema))
+  (when (or (and (instance? #?(:clj schema.core.EnumSchema, :cljs s/EnumSchema) schema)
                  (every? keyword? (.-vs ^schema.core.EnumSchema schema)))
-            (and (instance? #?(:clj schema.core.EqSchema :cljs s/EqSchema schema))
+            (and (instance? #?(:clj schema.core.EqSchema :cljs s/EqSchema) schema)
                  (keyword? (.-v ^schema.core.EqSchema schema))))
     string->keyword))
 
 (defn set-matcher [schema]
-  (if (instance? #?(:clj clojure.lang.APersistentSet, :cljs cljs.core.PersistentHashSet schema))
+  (if (instance? #?(:clj clojure.lang.APersistentSet, :cljs cljs.core.PersistentHashSet) schema)
     (fn [x] (if (sequential? x) (set x) x))))
 
 (defn safe
