@@ -9,27 +9,14 @@
                                   [org.clojure/tools.nrepl "0.2.5"]
                                   [org.clojure/test.check "0.9.0"]
                                   [potemkin "0.4.1"]]
-                   :plugins [[com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]
-                             [codox "0.8.8"]
+                   :plugins [[codox "0.8.8"]
                              [lein-cljsbuild "1.0.5"]
-                             [com.cemerick/clojurescript.test "0.3.1"]]
-                   :cljx {:builds [{:source-paths ["src/cljx"]
-                                    :output-path "target/generated/src/clj"
-                                    :rules :clj}
-                                   {:source-paths ["src/cljx"]
-                                    :output-path "target/generated/src/cljs"
-                                    :rules :cljs}
-                                   {:source-paths ["test/cljx"]
-                                    :output-path "target/generated/test/clj"
-                                    :rules :clj}
-                                   {:source-paths ["test/cljx"]
-                                    :output-path "target/generated/test/cljs"
-                                    :rules :cljs}]}}
+                             [com.cemerick/clojurescript.test "0.3.1"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0-RC1"] [org.clojure/clojurescript "0.0-3308"]]}}
 
   :aliases {"all" ["with-profile" "dev:dev,1.8"]
-            "deploy" ["do" "clean," "cljx" "once," "deploy" "clojars"]
-            "test" ["do" "clean," "cljx" "once," "test," "with-profile" "dev" "cljsbuild" "test"]}
+            "deploy" ["do" "clean," "deploy" "clojars"]
+            "test" ["do" "clean," "test," "with-profile" "dev" "cljsbuild" "test"]}
 
   :jar-exclusions [#"\.cljx|\.swp|\.swo|\.DS_Store"]
 
@@ -38,12 +25,6 @@
 
   :auto-clean false
 
-  :source-paths ["target/generated/src/clj" "src/clj"]
-
-  :resource-paths ["target/generated/src/cljs"]
-
-  :test-paths ["target/generated/test/clj" "test/clj"]
-
   :cljsbuild {:test-commands {"unit" ["phantomjs" :runner
                                       "this.literal_js_was_evaluated=true"
                                       "target/unit-test.js"]
@@ -51,25 +32,21 @@
                                                 "this.literal_js_was_evaluated=true"
                                                 "target/unit-test-no-assert.js"]}
               :builds
-              {:dev {:source-paths ["src/clj" "target/generated/src/cljs"]
+              {:dev {:source-paths ["src"]
                      :compiler {:output-to "target/main.js"
                                 :optimizations :whitespace
                                 :pretty-print true}}
-               :test {:source-paths ["src/clj" "test/clj"
-                                     "target/generated/src/cljs"
-                                     "target/generated/test/cljs"]
+               :test {:source-paths ["src" "test"]
                       :compiler {:output-to "target/unit-test.js"
                                  :optimizations :whitespace
                                  :pretty-print true}}
-               :test-no-assert {:source-paths ["src/clj" "test/clj"
-                                               "target/generated/src/cljs"
-                                               "target/generated/test/cljs"]
+               :test-no-assert {:source-paths ["src" "test"]
                                 :assert false
                                 :compiler {:output-to "target/unit-test-no-assert.js"
                                            :optimizations :whitespace
                                            :pretty-print true}}}}
 
-  :codox {:src-uri-mapping {#"target/generated/src/clj" #(str "src/cljx/" % "x")}
+  :codox {;; :src-uri-mapping {#"target/generated/src/clj" #(str "src/cljx/" % "x")}
           :src-dir-uri "http://github.com/plumatic/schema/blob/master/"
           :src-linenum-anchor-prefix "L"}
 
