@@ -138,7 +138,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Registry for attaching schemas to classes, used for defn and defrecord
 
-#+clj
+#?(:clj
 (let [^java.util.Map +class-schemata+ (java.util.Collections/synchronizedMap (java.util.WeakHashMap.))]
   (defn declare-class-schema! [klass schema]
     "Globally set the schema for a class (above and beyond a simple instance? check).
@@ -152,28 +152,32 @@
   (defn class-schema [klass]
     "The last schema for a class set by declare-class-schema!, or nil."
     (.get +class-schemata+ klass)))
+)
 
-#+cljs
+#?(:cljs
 (do
   (defn declare-class-schema! [klass schema]
     (aset klass "schema$utils$schema" schema))
 
   (defn class-schema [klass]
     (aget klass "schema$utils$schema")))
+)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utilities for fast-as-possible reference to use to turn fn schema validation on/off
 
-#+clj
+#?(:clj
 (definterface PSimpleCell
   (get_cell ^boolean [])
   (set_cell [^boolean x]))
+)
 
-#+cljs
+#?(:cljs
 (defprotocol PSimpleCell
   (get_cell [this])
   (set_cell [this x]))
+)
 
 
 ;; adds ~5% overhead compared to no check
@@ -188,7 +192,8 @@
    when it is false."
   (SimpleVCell. false))
 
-#+cljs
+#?(:cljs
 (do
   (set! (.-get_cell use-fn-validation) (partial get_cell use-fn-validation))
   (set! (.-set_cell use-fn-validation) (partial set_cell use-fn-validation)))
+)
