@@ -129,7 +129,14 @@
   [schema]
   (comp utils/error-val
         (spec/run-checker
-         (clojure.core/fn [s params] (spec/checker (spec s) params)) false schema)))
+         (clojure.core/fn [s subschema-checker return-walked? cache]
+           (spec/checker
+            (spec s)
+            subschema-checker
+            return-walked?
+            cache))
+         false
+         schema)))
 
 (clojure.core/defn check
   "Return nil if x matches schema; otherwise, returns a value that looks like the
@@ -244,8 +251,14 @@
 
 (clojure.core/defrecord EqSchema [v]
   Schema
-  (spec [this] (leaf/leaf-spec (spec/precondition this #(= v %) #(list '= v %))))
-  (explain [this] (list 'eq v)))
+  (spec [this]
+    (leaf/leaf-spec
+     (spec/precondition
+      this
+      #(= v %)
+      #(list '= v %))))
+  (explain [this]
+    (list 'eq v)))
 
 (clojure.core/defn eq
   "A value that must be (= v)."
@@ -257,8 +270,14 @@
 
 (clojure.core/defrecord Isa [h parent]
   Schema
-  (spec [this] (leaf/leaf-spec (spec/precondition this #(isa? h % parent) #(list 'isa? % parent))))
-  (explain [this] (list 'isa? parent)))
+  (spec [this]
+    (leaf/leaf-spec
+     (spec/precondition
+      this
+      #(isa? h % parent)
+      #(list 'isa? % parent))))
+  (explain [this]
+    (list 'isa? parent)))
 
 (clojure.core/defn isa
   "A value that must be a child of parent."
@@ -590,7 +609,7 @@
     (apply every-pred (map (comp precondition spec) schemas)))
   spec/CoreSpec
   (subschemas [this] schemas)
-  (checker [this params]
+  (checker [this subschema-checker return-walked? cache]
     (reduce
      (clojure.core/fn [f t]
        (clojure.core/fn [x]
@@ -598,7 +617,8 @@
            (if (utils/error? tx)
              tx
              (f (or tx x))))))
-     (map #(spec/sub-checker {:schema %} params) (reverse schemas)))))
+     (map #(spec/sub-checker {:schema %} subschema-checker return-walked? cache)
+          (reverse schemas)))))
 
 (clojure.core/defn ^{:deprecated "1.0.0"} both
   "A value that must satisfy every schema in schemas.
@@ -731,8 +751,12 @@
     (collection/collection-spec
      spec/+no-precondition+
      vec
-     [(collection/one-element true key-schema (clojure.core/fn [item-fn e] (item-fn (key e)) e))
-      (collection/one-element true val-schema (clojure.core/fn [item-fn e] (item-fn (val e)) nil))]
+     [(collection/one-element true key-schema (clojure.core/fn [item-fn e]
+                                                (item-fn (key e))
+                                                e))
+      (collection/one-element true val-schema (clojure.core/fn [item-fn e]
+                                                (item-fn (val e))
+                                                nil))]
      (clojure.core/fn [[k] [xk xv] _]
        (if-let [k-err (utils/error-val xk)]
          [k-err 'invalid-key]

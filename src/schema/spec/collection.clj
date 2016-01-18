@@ -9,11 +9,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Collection Specs
 
-(defn- element-transformer [e params then]
+(defn- element-transformer [e subschema-checker return-walked? cache then]
   (let [parser (:parser e)
-        c (spec/sub-checker e params)]
+        c (spec/sub-checker e subschema-checker return-walked? cache)]
     (fn [^java.util.List res x]
-      (then res (parser (fn [t] (.add res (if (utils/error? t) t (c t)))) x)))))
+      (then
+       res
+       (parser
+        (fn [t]
+          (.add res
+                (if (utils/error? t)
+                  t
+                  (c t))))
+        x)))))
 
 ;; for performance
 (defn- has-error? [^java.util.List l]
@@ -30,19 +38,27 @@
 (defrecord CollectionSpec [pre constructor elements on-error]
   spec/CoreSpec
   (subschemas [this] (map :schema elements))
-  (checker [this params]
-    (let [constructor (if (:return-walked? params) constructor (fn [_] nil))
+  (checker [this subschema-checker return-walked? cache]
+    (let [constructor
+          (if return-walked?
+            constructor
+            (fn [_]
+              nil))
+
           t (reduce
              (fn [f e]
-               (element-transformer e params f))
-             (fn [_ x] x)
+               (element-transformer e subschema-checker return-walked? cache f))
+             (fn [_ x]
+               x)
              (reverse elements))]
       (fn [x]
         (or (pre x)
             (let [res (java.util.ArrayList.)
                   remaining (t res x)
                   res res]
-              (if (or (seq remaining) (has-error? res))
+              (if (or
+                   (seq remaining)
+                   (has-error? res))
                 (utils/error (on-error x res remaining))
                 (constructor res))))))))
 
@@ -73,7 +89,10 @@
 (defn all-elements [schema]
   {:schema schema
    :cardinality :zero-or-more
-   :parser (fn [item-fn coll] (doseq [x coll] (item-fn x)) nil)})
+   :parser (fn [item-fn coll]
+             (doseq [x coll]
+               (item-fn x))
+             nil)})
 
 (defn one-element [required? schema parser]
   {:schema schema

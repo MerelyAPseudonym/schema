@@ -81,8 +81,8 @@
     leaf-generators :- generators/LeafGenerators
     wrappers :- generators/GeneratorWrappers]
      (spec/run-checker
-      (fn [s params]
-        (let [c (spec/checker (s/spec s) params)
+      (fn [s subschema-checker return-walked? cache]
+        (let [c (spec/checker (s/spec s) subschema-checker return-walked? cache)
               coercer (or (coercion-matcher s) identity)
               completr (completer* (s/spec s) s c [leaf-generators wrappers])]
           (fn [x]

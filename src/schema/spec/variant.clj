@@ -8,9 +8,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variant Specs
 
-(defn- option-step [o params else]
+(defn- option-step [o subschema-checker return-walked? cache else]
   (let [g (:guard o)
-        c (spec/sub-checker o params)
+        c (spec/sub-checker o subschema-checker return-walked? cache)
         step (if g
                (fn [x]
                  (let [guard-result (macros/try-catchall
@@ -40,10 +40,10 @@
 (defrecord VariantSpec [pre options err-f post]
   spec/CoreSpec
   (subschemas [this] (map :schema options))
-  (checker [this params]
+  (checker [this subschema-checker return-walked? cache]
     (let [t (reduce
              (fn [f o]
-               (option-step o params f))
+               (option-step o subschema-checker return-walked? cache f))
              (fn [x] (macros/validation-error this x (err-f (utils/value-name x))))
              (reverse options))]
       (if post
@@ -52,7 +52,7 @@
               (let [v (t x)]
                 (if (utils/error? v)
                   v
-                  (or (post (if (:return-walked? params) v x)) v)))))
+                  (or (post (if return-walked? v x)) v)))))
         (fn [x]
           (or (pre x)
               (t x)))))))

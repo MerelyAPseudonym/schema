@@ -27,8 +27,8 @@
    a coerced value, or a schema.utils.ErrorContainer describing the error."
   [schema coercion-matcher]
   (s/validate CoercionMatcher coercion-matcher)
-  (spec/run-checker (fn [s params]
-                      (let [c (spec/checker (s/spec s) params)]
+  (spec/run-checker (fn [s subschema-checker return-walked? cache]
+                      (let [c (spec/checker (s/spec s) subschema-checker return-walked? cache)]
                         (if-let [coercer (coercion-matcher s)]
                           (fn [x]
                             (try

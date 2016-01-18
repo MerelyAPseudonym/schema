@@ -15,7 +15,7 @@
    to being a Spec."
   (subschemas [this]
     "List all subschemas")
-  (checker [this params]
+  (checker [this subschema-checker return-walked? cache]
     "Create a function that takes [data], and either returns a walked version of data
      (by default, usually just data), or a utils/ErrorContainer containing value that looks
      like the 'bad' parts of data with ValidationErrors at the leaves describing the failures.
@@ -70,11 +70,10 @@
   "A helper to start a checking run, by setting the appropriate params.
    For examples, see schema.core/checker or schema.coerce/coercer."
   [f return-walked? s]
-  (f
-   s
-   {:subschema-checker f
-    :return-walked? return-walked?
-    :cache (java.util.IdentityHashMap.)}))
+  (f s
+     f
+     return-walked?
+     (java.util.IdentityHashMap.)))
 
 (defn with-cache [^java.util.Map cache cache-key wrap-recursive-delay result-fn]
   (if-let [w (.get cache cache-key)]
@@ -86,14 +85,20 @@
           (.put cache cache-key res)
           res))))
 
+(defn default-wrap-recursive-delay [d]
+  (fn [x]
+    (@d x)))
+
 (defn sub-checker
   "Should be called recursively on each subschema in the 'checker' method of a spec.
    Handles caching and error wrapping behavior."
-  [{:keys [schema error-wrap]}
-   {:keys [subschema-checker cache] :as params}]
+  [{:keys [schema error-wrap]} subschema-checker return-walked? cache]
   (let [sub (with-cache cache schema
-              (fn [d] (fn [x] (@d x)))
-              (fn [] (subschema-checker schema params)))]
+              (fn [d]
+                (fn [x]
+                  (@d x)))
+              (fn []
+                (subschema-checker schema subschema-checker return-walked? cache)))]
     (if error-wrap
       (fn [x]
         (let [res (sub x)]

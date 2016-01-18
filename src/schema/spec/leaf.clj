@@ -8,9 +8,13 @@
 
 (defrecord LeafSpec [pre]
   spec/CoreSpec
-  (subschemas [this] nil)
-  (checker [this params]
-    (fn [x] (or (pre x) x))))
+  (subschemas [this]
+    nil)
+  (checker [this subschema-checker return-walked? cache]
+    (fn [x]
+      (or
+       (pre x)
+       x))))
 
 (defn leaf-spec
   "A leaf spec represents an atomic datum that is checked completely
