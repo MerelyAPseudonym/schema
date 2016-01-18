@@ -27,21 +27,20 @@
    a coerced value, or a schema.utils.ErrorContainer describing the error."
   [schema coercion-matcher]
   (s/validate CoercionMatcher coercion-matcher)
-  (spec/run-checker
-   (fn [s params]
-     (let [c (spec/checker (s/spec s) params)]
-       (if-let [coercer (coercion-matcher s)]
-         (fn [x]
-           (try
-             (let [v (coercer x)]
-               (if (utils/error? v)
-                 v
-                 (c v)))
-             (catch Throwable t
-               (macros/validation-error s x t))))
-         c)))
-   true
-   schema))
+  (spec/run-checker (fn [s params]
+                      (let [c (spec/checker (s/spec s) params)]
+                        (if-let [coercer (coercion-matcher s)]
+                          (fn [x]
+                            (try
+                              (let [v (coercer x)]
+                                (if (utils/error? v)
+                                  v
+                                  (c v)))
+                              (catch Throwable t
+                                (macros/validation-error s x t))))
+                          c)))
+                    true
+                    schema))
 
 (defn coercer!
   "Like `coercer`, but is guaranteed to return a value that satisfies schema (or throw)."
