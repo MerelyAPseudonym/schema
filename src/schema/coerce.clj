@@ -84,7 +84,7 @@
     string->keyword))
 
 (defn set-matcher [schema]
-  (if (instance? clojure.lang.APersistentSet schema)
+  (when (instance? clojure.lang.APersistentSet schema)
     (fn [x] (if (sequential? x) (set x) x))))
 
 (defn safe
@@ -96,7 +96,7 @@
   (fn [x]
     (try
       (f x)
-      (catch Throwable t
+      (catch Throwable _
         x))))
 
 (def safe-long-cast
