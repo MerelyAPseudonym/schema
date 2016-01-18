@@ -72,14 +72,14 @@
     :return-walked? return-walked?
     :cache (java.util.IdentityHashMap.)}))
 
-(defn with-cache [cache cache-key wrap-recursive-delay result-fn]
-  (if-let [w (.get ^java.util.Map cache cache-key)]
+(defn with-cache [^java.util.Map cache cache-key wrap-recursive-delay result-fn]
+  (if-let [w (.get cache cache-key)]
     (if (= ::in-progress w) ;; recursive
-      (wrap-recursive-delay (delay (.get ^java.util.Map cache cache-key)))
+      (wrap-recursive-delay (delay (.get cache cache-key)))
       w)
-    (do (.put ^java.util.Map cache cache-key ::in-progress)
+    (do (.put cache cache-key ::in-progress)
         (let [res (result-fn)]
-          (.put ^java.util.Map cache cache-key res)
+          (.put cache cache-key res)
           res))))
 
 (defn sub-checker
