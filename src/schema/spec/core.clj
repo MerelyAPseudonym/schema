@@ -50,7 +50,11 @@
    where datum-description is a (short) printable standin for the datum."
   [s p err-f]
   (fn [x]
-    (when-let [reason (macros/try-catchall (when-not (p x) 'not) (catch e# 'throws?))]
+    (when-let [reason (try
+                        (when-not (p x)
+                          'not)
+                        (catch Throwable _
+                          'throws?))]
       (macros/validation-error s x (err-f (utils/value-name x)) reason))))
 
 (defmacro simple-precondition
