@@ -10,5 +10,6 @@
                                   [org.clojure/tools.namespace "0.2.11"]
                                   [spootnik/unilog "0.7.13"]
                                   [com.taoensso/timbre "4.2.1"]
-                                  [potemkin "0.4.1"]]}
+                                  [potemkin "0.4.1"]]
+                   :source-paths ["dev"]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0-RC1"]]}})
