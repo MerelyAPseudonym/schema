@@ -22,28 +22,31 @@
    coercion of its sub-schemas, if applicable)"
   (s/=> (s/maybe (s/=> s/Any s/Any)) Schema))
 
-(s/defn coercer
+(defn coercer
   "Produce a function that simultaneously coerces and validates a datum.  Returns
    a coerced value, or a schema.utils.ErrorContainer describing the error."
-  [schema coercion-matcher :- CoercionMatcher]
+  [schema coercion-matcher]
+  (s/validate CoercionMatcher coercion-matcher)
   (spec/run-checker
    (fn [s params]
      (let [c (spec/checker (s/spec s) params)]
        (if-let [coercer (coercion-matcher s)]
          (fn [x]
-           (macros/try-catchall
-            (let [v (coercer x)]
-              (if (utils/error? v)
-                v
-                (c v)))
-            (catch t (macros/validation-error s x t))))
+           (try
+             (let [v (coercer x)]
+               (if (utils/error? v)
+                 v
+                 (c v)))
+             (catch Throwable t
+               (macros/validation-error s x t))))
          c)))
    true
    schema))
 
-(s/defn coercer!
+(defn coercer!
   "Like `coercer`, but is guaranteed to return a value that satisfies schema (or throw)."
-  [schema coercion-matcher :- CoercionMatcher]
+  [schema coercion-matcher]
+  (s/validate CoercionMatcher coercion-matcher)
   (let [c (coercer schema coercion-matcher)]
     (fn [value]
       (let [coerced (c value)]
@@ -55,10 +58,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Coercion helpers
 
-(s/defn first-matcher :- CoercionMatcher
+(defn first-matcher
   "A matcher that takes the first match from matchers."
-  [matchers :- [CoercionMatcher]]
-  (fn [schema] (first (keep #(% schema) matchers))))
+  [matchers]
+  (s/validate [CoercionMatcher] matchers)
+  (letfn [(result-fn [schema]
+            (first (keep #(% schema) matchers)))]
+    (s/validate CoercionMatcher result-fn)
+    result-fn))
 
 (defn string->keyword [s]
   (if (string? s) (keyword s) s))
@@ -86,7 +93,11 @@
    guarded for exceptions, and failing to coerce will generally produce a more useful error
    in this case."
   [f]
-  (fn [x] (macros/try-catchall (f x) (catch e x))))
+  (fn [x]
+    (try
+      (f x)
+      (catch Throwable t
+        x))))
 
 (def safe-long-cast
   "Coerce x to a long if this can be done without losing precision, otherwise return x."
