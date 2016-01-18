@@ -324,7 +324,7 @@
 (defmacro protocol
   "A value that must satsify? protocol p.
 
-   Internaly, we must make sure not to capture the value of the protocol at
+   Internally, we must make sure not to capture the value of the protocol at
    schema creation time, since that's impossible in cljs and breaks later
    extends in Clojure.
 
